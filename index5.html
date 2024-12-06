@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive 3D Dice with Roll Counter</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .scene {
+            width: 100px;
+            height: 100px;
+            perspective: 600px;
+        }
+        .dice {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s ease;
+        }
+        .dice div {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            border: 2px solid #fff;
+        }
+        .front  { transform: rotateY(  0deg) translateZ(50px); }
+        .back   { transform: rotateY(180deg) translateZ(50px); }
+        .right  { transform: rotateY( 90deg) translateZ(50px); }
+        .left   { transform: rotateY(-90deg) translateZ(50px); }
+        .top    { transform: rotateX( 90deg) translateZ(50px); }
+        .bottom { transform: rotateX(-90deg) translateZ(50px); }
+        #rollButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #rollButton:hover {
+            background-color: #005f73;
+        }
+        .counter-container {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .counter-container h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .counter-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .counter-container li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="scene">
+        <div class="dice" id="dice">
+            <div class="front" id="face-front">1</div>
+            <div class="back" id="face-back">2</div>
+            <div class="right" id="face-right">3</div>
+            <div class="left" id="face-left">4</div>
+            <div class="top" id="face-top">5</div>
+            <div class="bottom" id="face-bottom">6</div>
+        </div>
+    </div>
+    <button id="rollButton">Roll the Dice</button>
+    
+    <div class="counter-container">
+        <h3>Roll Count</h3>
+        <ul id="rollCountList"></ul>
+    </div>
+
+    <script>
+        const dice = document.getElementById('dice');
+        const rollButton = document.getElementById('rollButton');
+        const rollCountList = document.getElementById('rollCountList');
+
+        let previousRoll = null;
+
+        // Predefined transformations for each face up orientation
+        const transformations = [
+            { x: 0, y: 0 },     // Front face
+            { x: 0, y: 180 },   // Back face
+            { x: 0, y: 90 },    // Right face
+            { x: 0, y: -90 },   // Left face
+            { x: 90, y: 0 },    // Top face
+            { x: -90, y: 0 }    // Bottom face
+        ];
+
+        // Counter object to keep track of how many times each number is rolled
+        const rollCount = {};
+
+        function updateRollCountDisplay() {
+            rollCountList.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const count = rollCount[i] || 0;
+                const listItem = document.createElement('li');
+                listItem.textContent = `Number ${i}: ${count} times`;
+                rollCountList.appendChild(listItem);
+            }
+        }
+
+        function rollDice() {
+            let randomIndex;
+
+            // Ensure we get a different roll than the previous one
+            do {
+                randomIndex = Math.floor(Math.random() * transformations.length);
+            } while (randomIndex === previousRoll);
+
+            previousRoll = randomIndex;
+
+            const { x, y } = transformations[randomIndex];
+
+            // Set the transform for visual rolling effect
+            dice.style.transform = `rotateX(${x}deg) rotateY(${y}deg)`;
+
+            // Generate a random number between 1 and 20
+            let randomNumber;
+            do {
+                randomNumber = Math.floor(Math.random() * 20) + 1;
+
+                // Initialize counter for the random number if it doesn't exist
+                if (!rollCount[randomNumber]) {
+                    rollCount[randomNumber] = 0;
+                }
+            } while (rollCount[randomNumber] >= 5); // Ensure a number doesn't repeat more than 5 times
+
+            // Update the counter for the rolled number
+            rollCount[randomNumber] += 1;
+
+            // Update all faces to display the rolled number after the roll
+            setTimeout(() => {
+                document.getElementById('face-front').textContent = randomNumber;
+                document.getElementById('face-back').textContent = randomNumber;
+                document.getElementById('face-right').textContent = randomNumber;
+                document.getElementById('face-left').textContent = randomNumber;
+                document.getElementById('face-top').textContent = randomNumber;
+                document.getElementById('face-bottom').textContent = randomNumber;
+                updateRollCountDisplay(); // Update the roll count display
+            }, 1000); // Match the CSS transition time for better visual effect
+        }
+
+        rollButton.addEventListener('click', rollDice);
+        dice.addEventListener('click', rollDice);
+
+        // Initial setup of roll count display
+        updateRollCountDisplay();
+    </script>
+   <script type="module">
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBfpN3B6ZsGjxkFUAsMCXX_HFDWhtDqIx4",
+  authDomain: "dice4class.firebaseapp.com",
+  projectId: "dice4class",
+  storageBucket: "dice4class.firebasestorage.app",
+  messagingSenderId: "942127836619",
+  appId: "1:942127836619:web:68b2fa98571337e7fada4e",
+  measurementId: "G-RKQBDDTK1F"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+  </script>
+</body>
+</html>
